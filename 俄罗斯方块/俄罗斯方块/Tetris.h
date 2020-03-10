@@ -186,5 +186,9 @@ bool rotatable(int x, int y, _Block_Dir Dir);
 bool Movable(int x, int y, _Block_Dir b_Dir, _Move_Dir m_Dir);
 void EndCheck();
 void mark(int x, int y, _Block_Dir Dir);
+void wait(int speed);
+void updateScore(int count);
+void upgradeRank();
+void clearCheck();
 
 #endif // !__TETRIS_H__

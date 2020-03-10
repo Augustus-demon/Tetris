@@ -20,8 +20,8 @@ void Welcome() {
 	//在窗口中显示欢迎界面的说明
 	setcolor(WHITE);
 	settextstyle(30, 0, _T("楷体"));
-	outtextxy(205, 200, _T("俄罗斯方块"));
-	outtextxy(175, 300, _T("你能得到1000分吗?"));
+	outtextxy(195, 250, _T("你能在这里"));
+	outtextxy(175, 300, _T("得到1000分吗?"));
 	Sleep(3000);
 }
 //初始化游戏界面
@@ -74,7 +74,7 @@ void clearBlock(int x, int y, _Block_Dir direct) {
 	for (int i = 0; i < BLOCK_HEIGHT; i++) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
 			//■
-			if (block[tmp][i][j] == 1) {
+			if (block[tmp][i][j]) {
 				outtextxy(x + j * UNIT_SIZE, y + i * UNIT_SIZE, "■");
 			}
 		}
@@ -87,7 +87,7 @@ void drawBlock(int x, int y) {
 	for (int i = 0; i < BLOCK_HEIGHT; i++) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
 			//■
-			if (block[NextIndex * 4][i][j] == 1) {
+			if (block[NextIndex * 4][i][j]) {
 				outtextxy(x + j * UNIT_SIZE, y + i * UNIT_SIZE, "■");
 			}
 		}
@@ -103,7 +103,7 @@ void drawBlock(int x, int y, _Block_Dir direct) {
 	for (int i = 0; i < BLOCK_HEIGHT; i++) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
 			//■
-			if (block[tmp][i][j] == 1) {
+			if (block[tmp][i][j]) {
 				outtextxy(x + j * UNIT_SIZE, y + i * UNIT_SIZE, "■");
 			}
 		}
@@ -147,7 +147,7 @@ bool Movable(int x, int y, _Block_Dir b_Dir, _Move_Dir m_Dir) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
 			changed_Row = Row + i + change_C;
 			changed_Column = Column + j + change_R;
-			if (block[tmp][i][j] == 1 &&
+			if (block[tmp][i][j] &&
 				((!isValid(changed_Row, changed_Column)) ||
 				(isValid(changed_Row, changed_Column) &&
 					Gamearea[changed_Row][changed_Column] == 1))) {
@@ -178,7 +178,7 @@ bool rotatable(int x, int y, _Block_Dir Dir) {
 	}
 	for (int i = 0; i < BLOCK_HEIGHT; i++) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
-			if (block[tmp][i][j] == 1 &&
+			if (block[tmp][i][j] &&
 				(y0 + j < 0 || y0 + j >= 15 || Gamearea[x0 + i][y0 + j] == 1)) {
 				return false;
 			}
@@ -193,7 +193,7 @@ void mark(int x, int y, _Block_Dir Dir) {
 	int tmp = CurrentIndex * 4 + Dir;
 	for (int i = 0; i < BLOCK_HEIGHT; i++) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
-			if (block[tmp][i][j] == 1) {
+			if (block[tmp][i][j] ) {
 				Gamearea[y0 + i][x0 + j] = 1;
 				areaColor[y0 + i][x0 + j] = Color[CurrentIndex];
 			}
@@ -204,7 +204,7 @@ void mark(int x, int y, _Block_Dir Dir) {
 	for (int i = 0; i < BLOCK_HEIGHT; i++) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
 			//■
-			if (block[tmp][i][j] == 1) {
+			if (block[tmp][i][j]) {
 				outtextxy(x + j * UNIT_SIZE, y + i * UNIT_SIZE, "■");
 			}
 		}
@@ -295,7 +295,7 @@ void newBlock() {
 void clearLine(int x) {
 	for (int i = x; i >= 0; i--) {
 		for (int j = 0; j < 15; j++) {
-			if (Gamearea[i - 1][j] == 1) {
+			if (Gamearea[i - 1][j]) {
 				Gamearea[i][j] = Gamearea[i - 1][j];
 				areaColor[i][j] = areaColor[i - 1][j];
 				setcolor(areaColor[i][j]);
@@ -323,21 +323,23 @@ void updateScore(int count) {
 	Score += count * 10;
 
 	setcolor(RED);
+	settextstyle(24, 0, _T("微软雅黑"));
 	sprintf_s(str, sizeof(str), "%d", Score);
 	outtextxy(415, 310, str);
 }
 //更新等级并加速下落
 void upgradeRank() {
 	char str[32];
-	Rank = Score / 50;
-	dropSpeed = 500 - Rank * 100;
+	Rank = Score / 100;
+	dropSpeed = 500 - Rank * 80;
 	if (dropSpeed <= 100) {
 		dropSpeed = 100;
 	}
 
 	setcolor(RED);
+	settextstyle(24, 0, _T("微软雅黑"));
 	sprintf_s(str, sizeof(str), "%d", Rank);
-	outtextxy(415, 310, str);
+	outtextxy(425, 405, str);
 }
 //判断能否消除某一行
 void clearCheck() {
