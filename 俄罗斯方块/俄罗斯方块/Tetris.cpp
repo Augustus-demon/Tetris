@@ -39,10 +39,10 @@ void initGameScene() {
 
 	settextcolor(RED);
 	outtextxy(405, 280, _T("分数:"));
-	sprintf_s(str, "%d", Rank);
+	sprintf_s(str, sizeof(str), "%d", Rank);
 	outtextxy(415, 310, str);
 	outtextxy(405, 375, _T("等级:"));
-	sprintf_s(str, "%d", Score);
+	sprintf_s(str, sizeof(str), "%d", Score);
 	outtextxy(425, 405, str);
 
 	settextcolor(LIGHTBLUE);
@@ -116,7 +116,7 @@ void nextBlock() {
 	clearBlock();
 	//在方框中画出下一个方块的图样
 	
-	srand(time(NULL));
+	srand((int)time(NULL));
 	NextIndex = rand() % BLOCK_KIND;
 	
 	drawBlock(x,y);
@@ -148,9 +148,9 @@ bool Movable(int x, int y, _Block_Dir b_Dir, _Move_Dir m_Dir) {
 			changed_Row = Row + i + change_C;
 			changed_Column = Column + j + change_R;
 			if (block[tmp][i][j] == 1 &&
-				((!isValid(changed_Row, changed_Column))||
-				((isValid(changed_Row, changed_Column) && 
-				  Gamearea[changed_Row][changed_Column] == 1)))) {
+				((!isValid(changed_Row, changed_Column)) ||
+				(isValid(changed_Row, changed_Column) &&
+					Gamearea[changed_Row][changed_Column] == 1))) {
 				return false;
 				
 			}
@@ -169,9 +169,62 @@ void EndCheck() {
 		exit(0);
 	}
 }
+bool rotatable(int x, int y, _Block_Dir Dir) {
+	int tmp = CurrentIndex * 4 + Dir;
+	int x0 = (y - START_Y) / UNIT_SIZE;
+	int y0 = (x - START_X) / UNIT_SIZE;
+	if (!Movable(x, y, Dir, MOVE_DOWN)) {
+		return false;
+	}
+	for (int i = 0; i < BLOCK_HEIGHT; i++) {
+		for (int j = 0; j < BLOCK_WIDTH; j++) {
+			if (block[tmp][i][j] == 1 &&
+				(y0 + j < 0 || y0 + j >= 15 || Gamearea[x0 + i][y0 + j] == 1)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+//固定方块
+void mark(int x, int y, _Block_Dir Dir) {
+	int x0 = (x - MIN_X) / UNIT_SIZE;
+	int y0 = (y - MIN_Y) / UNIT_SIZE;
+	int tmp = CurrentIndex * 4 + Dir;
+	for (int i = 0; i < BLOCK_HEIGHT; i++) {
+		for (int j = 0; j < BLOCK_WIDTH; j++) {
+			if (block[tmp][i][j] == 1) {
+				Gamearea[y0 + i][x0 + j] = 1;
+				areaColor[y0 + i][x0 + j] = Color[CurrentIndex];
+			}
+		}
+	}
+	settextcolor(Color[CurrentIndex]);
+	settextstyle(23, 0, "正楷");
+	for (int i = 0; i < BLOCK_HEIGHT; i++) {
+		for (int j = 0; j < BLOCK_WIDTH; j++) {
+			//■
+			if (block[tmp][i][j] == 1) {
+				outtextxy(x + j * UNIT_SIZE, y + i * UNIT_SIZE, "■");
+			}
+		}
+	}
+}
+//等待延时函数
+void wait(int speed) {
+	if (speed < 0)speed = 50;
+	int count = speed / TIME_INTERVAL;
+	for (int n = 0; n < count; n++) {
+		Sleep(TIME_INTERVAL);
+		if (_kbhit()) {
+			return;
+		}
+	}
+}
 //方块降落
 void Move() {
 	int x = START_X, y = START_Y;
+	int curSpeed = dropSpeed;//保证每次方块刚生成的降落速度一致
 	_Block_Dir block_direct = UP;
 	//先检测游戏是否结束
 	EndCheck();
@@ -182,37 +235,45 @@ void Move() {
 		if (_kbhit()) {
 			int key = _getch();
 			if (key == KEY_SPACE) {
-				int i = _getch();
+				int x = _getch();
 			}
 		}
 		//清除现在位置的方块
-		clearBlock(x + j * UNIT_SIZE, y + i * UNIT_SIZE, block_direct);
+		clearBlock(x + i * UNIT_SIZE, y + j * UNIT_SIZE, block_direct);
 		if (_kbhit()) {
 			int key = _getch();
 			if (key == KEY_UP) {
-				//block_direct
+				_Block_Dir next_Dir = (_Block_Dir)((block_direct + 1) % 4);
+				if (rotatable(x + i * UNIT_SIZE, y + j * UNIT_SIZE, next_Dir)) {
+					block_direct = next_Dir;
+				}
 			}
 			else if (key==KEY_LEFT) {
-				if (Movable(x + j * UNIT_SIZE, y + i * UNIT_SIZE, block_direct, MOVE_LEFT)) {
-					j--;
+				if (Movable(x + i * UNIT_SIZE, y + j * UNIT_SIZE, block_direct, MOVE_LEFT)) {
+					i--;
 				}
 			}
 			else if (key == KEY_DOWN) {
-
-				i += 2;
+				curSpeed -= 5 * TIME_INTERVAL;
 			}
 			else if (key == KEY_RIGHT) {
-				if (Movable(x + j * UNIT_SIZE, y + i * UNIT_SIZE, block_direct, MOVE_RIGHT)) {
-					j++;
+				if (Movable(x + i * UNIT_SIZE, y + j * UNIT_SIZE, block_direct, MOVE_RIGHT)) {
+					i++;
 				}
 			}
 		}
-		if (Movable(x + j * UNIT_SIZE, y + i * UNIT_SIZE, block_direct, MOVE_DOWN)) {
-			i++;
+		j++;
+		
+		
+		drawBlock(x + i * UNIT_SIZE, y + j * UNIT_SIZE, block_direct);
+		
+		//根据降落速度进行等待
+		wait(curSpeed);
+		//固化处理
+		if (!Movable(x + i * UNIT_SIZE, y + j * UNIT_SIZE, block_direct, MOVE_DOWN)) {
+			mark(x + i * UNIT_SIZE, y + j * UNIT_SIZE, block_direct);
+			return;
 		}
-		drawBlock(x + j * UNIT_SIZE, y + i * UNIT_SIZE, block_direct);
-		Sleep(300);
-		//等待  to do。。。
 		
 	}
 }
@@ -230,16 +291,83 @@ void newBlock() {
 	Move();
 
 }
+//清除某一行并让上面数行降落一行
+void clearLine(int x) {
+	for (int i = x; i >= 0; i--) {
+		for (int j = 0; j < 15; j++) {
+			if (Gamearea[i - 1][j] == 1) {
+				Gamearea[i][j] = Gamearea[i - 1][j];
+				areaColor[i][j] = areaColor[i - 1][j];
+				setcolor(areaColor[i][j]);
+				outtextxy(j * UNIT_SIZE + MIN_X, i * UNIT_SIZE + MIN_Y, "■");
+			}
+			else {
+				Gamearea[i][j] = 0;
+				areaColor[i][j] = BLACK;
+				setcolor(BLACK);
+				outtextxy(j * UNIT_SIZE + MIN_X, i * UNIT_SIZE + MIN_Y, "■");
+			}
+		}
+	}
+	for (int j = 0; j < 15; j++) {
+		Gamearea[0][j] = 0;
+		areaColor[0][j] = BLACK;
+		setcolor(BLACK);
+		outtextxy(j * UNIT_SIZE + MIN_X, MIN_Y, "■");
+	}
+
+}
+//更新分数
+void updateScore(int count) {
+	char str[32];
+	Score += count * 10;
+
+	setcolor(RED);
+	sprintf_s(str, sizeof(str), "%d", Score);
+	outtextxy(415, 310, str);
+}
+//更新等级并加速下落
+void upgradeRank() {
+	char str[32];
+	Rank = Score / 50;
+	dropSpeed = 500 - Rank * 100;
+	if (dropSpeed <= 100) {
+		dropSpeed = 100;
+	}
+
+	setcolor(RED);
+	sprintf_s(str, sizeof(str), "%d", Rank);
+	outtextxy(415, 310, str);
+}
+//判断能否消除某一行
+void clearCheck() {
+	int i = 0, j = 0;
+	int cleared_Line = 0;
+	for (i = 29; i >= 0; i--) {
+		for (j = 0; j < 15 && Gamearea[i][j]; j++);
+		if (j >= 15) {
+			clearLine(i);
+			cleared_Line++;
+			i++;
+		}
+	}
+	updateScore(cleared_Line);//更新分数
+	if (cleared_Line > 0) {
+		upgradeRank();//更新等级并加速下落
+	}
+}
 int main() {
 	//开始前的准备
 	Welcome();
 	initGameScene();
 	nextBlock();
 	memset(Gamearea, 0, sizeof(Gamearea));//初始化游戏区域
+	memset(areaColor,BLACK, sizeof(Gamearea));
 	Sleep(500);//缓冲时间1秒
 	//游戏主体 死循环
 	while (1) {
 		newBlock();
+		clearCheck();
 	}
 
 	//system("pause");

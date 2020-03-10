@@ -19,18 +19,21 @@
 #define MIN_X 30
 #define MIN_Y 30
 
-#define isValid(x,y) (x >= 0 && x < 30 && y >= 0 && y < 15)
+#define TIME_INTERVAL 10
 
-int Rank = 0;
-int Score = 0;
+#define isValid(x,y) (x >= 0 && x < 30 && y >= 0 && y < 15)//判断坐标是否合法
 
-int Gamearea[30][15];
+int Rank = 0;//级别
+int Score = 0;//分数
 
-int CurrentIndex = -1;
-int NextIndex    = -1;
+int Gamearea[30][15]; //游戏区域
+int areaColor[30][15];//固化区域的颜色
+int dropSpeed = 50 * TIME_INTERVAL;//方块降落速度
+int CurrentIndex = -1;             //当前方块种类
+int NextIndex    = -1;             //下一方块种类
 //方块的颜色
-int Color[BLOCK_KIND + 1] = {
-	LIGHTRED,BLUE,YELLOW,BROWN,GREEN,WHITE
+int Color[BLOCK_KIND ] = {
+	CYAN,MAGENTA,YELLOW,BROWN,GREEN
 };
 typedef enum  {
 	UP,
@@ -133,15 +136,15 @@ int block[BLOCK_KIND * 4][BLOCK_HEIGHT][BLOCK_WIDTH] = {
 	 0,0,0,0,0,},
 
 	{0,0,0,0,0,
-	 0,0,1,1,0,
+	 0,1,1,0,0,
 	 0,0,1,0,0,
 	 0,0,1,0,0,
 	 0,0,0,0,0,},
 
 	{0,0,0,0,0,
-	 0,0,0,0,0,
-	 0,1,1,1,0,
 	 0,0,0,1,0,
+	 0,1,1,1,0,
+	 0,0,0,0,0,
 	 0,0,0,0,0,},
 	 //Z型
 	{0,0,0,0,0,
@@ -173,7 +176,15 @@ int block[BLOCK_KIND * 4][BLOCK_HEIGHT][BLOCK_WIDTH] = {
 void Welcome();
 void initGameScene();
 void nextBlock();
+void newBlock();
+void drawBlock(int x, int y, _Block_Dir direct);
 void drawBlock(int x, int y);
 void clearBlock();
+void clearBlock(int x, int y, _Block_Dir direct);
+void Move();
+bool rotatable(int x, int y, _Block_Dir Dir);
+bool Movable(int x, int y, _Block_Dir b_Dir, _Move_Dir m_Dir);
+void EndCheck();
+void mark(int x, int y, _Block_Dir Dir);
 
 #endif // !__TETRIS_H__
