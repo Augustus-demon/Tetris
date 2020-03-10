@@ -179,7 +179,7 @@ bool rotatable(int x, int y, _Block_Dir Dir) {
 	for (int i = 0; i < BLOCK_HEIGHT; i++) {
 		for (int j = 0; j < BLOCK_WIDTH; j++) {
 			if (block[tmp][i][j] &&
-				(y0 + j < 0 || y0 + j >= 15 || Gamearea[x0 + i][y0 + j] == 1)) {
+				(/*y0 + j < 0 || y0 + j >= 15 || */Gamearea[x0 + i][y0 + j] == 1)) {
 				return false;
 			}
 		}
@@ -248,7 +248,7 @@ void Move() {
 					block_direct = next_Dir;
 				}
 			}
-			else if (key==KEY_LEFT) {
+			else if(key == KEY_LEFT) {
 				if (Movable(x + i * UNIT_SIZE, y + j * UNIT_SIZE, block_direct, MOVE_LEFT)) {
 					i--;
 				}
@@ -261,6 +261,8 @@ void Move() {
 					i++;
 				}
 			}
+				
+				
 		}
 		j++;
 		
